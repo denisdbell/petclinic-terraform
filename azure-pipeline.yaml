@@ -1,0 +1,96 @@
+trigger:
+- main
+
+pool:
+  name: 'Default' # Uses your local self-hosted agent
+
+stages:
+  # STAGE 1: PLAN (Generates the preview)
+  - stage: Plan
+    displayName: 'Terraform Plan'
+    jobs:
+      - job: PlanJob
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: 'latest'
+
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Init'
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              backendServiceArm: '$(azureServiceConnection)'
+              backendAzureRmResourceGroupName: '$(resourceGroup)'
+              backendAzureRmStorageAccountName: '$(storageAccount)'
+              backendAzureRmContainerName: '$(container)'
+              backendAzureRmKey: '$(tfStateKey)'
+
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Plan'
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              commandOptions: '-out=main.tfplan'
+              environmentServiceNameAzureRM: '$(azureServiceConnection)'
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Plan Artifact'
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)'
+              artifact: 'terraform-plan'
+              publishLocation: 'pipeline'
+
+  # STAGE 2: DEPLOY (Requires Manual Approval)
+  - stage: Deploy
+    displayName: 'Terraform Apply'
+    dependsOn: Plan
+    condition: succeeded()
+    jobs:
+      - deployment: DeployJob
+        displayName: 'Deploy to Production'
+        environment: 'production' # <--- This links to the approval rule
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: none # Skip checking out git, we use the artifact
+
+                - task: DownloadPipelineArtifact@2
+                  displayName: 'Download Plan Artifact'
+                  inputs:
+                    buildType: 'current'
+                    artifactName: 'terraform-plan'
+                    targetPath: '$(System.DefaultWorkingDirectory)'
+                
+                - script: |
+                    echo "Restoring provider permissions..."
+                    chmod -R +x .terraform/providers
+                  displayName: 'Fix Provider Permissions'
+                  workingDirectory: '$(System.DefaultWorkingDirectory)'
+                  
+                - task: TerraformInstaller@0
+                  displayName: 'Install Terraform'
+                  inputs:
+                    terraformVersion: 'latest'
+
+                # We must Init again to download providers on the new agent
+                - task: TerraformTaskV4@4
+                  displayName: 'Terraform Init'
+                  inputs:
+                    provider: 'azurerm'
+                    command: 'init'
+                    backendServiceArm: '$(azureServiceConnection)'
+                    backendAzureRmResourceGroupName: '$(resourceGroup)'
+                    backendAzureRmStorageAccountName: '$(storageAccount)'
+                    backendAzureRmContainerName: '$(container)'
+                    backendAzureRmKey: '$(tfStateKey)'
+
+                - task: TerraformTaskV4@4
+                  displayName: 'Terraform Apply'
+                  inputs:
+                    provider: 'azurerm'
+                    command: 'apply'
+                    commandOptions: 'main.tfplan' # Applies the exact plan from Stage 1
+                    environmentServiceNameAzureRM: '$(azureServiceConnection)'
