@@ -180,7 +180,7 @@ Allows Terraform to create and manage infrastructure within the backend resource
 az role assignment create \
   --assignee <SP_OBJECT_ID> \
   --role "Contributor" \
-  --scope "/subscriptions/<SUB_ID>/resourceGroups/rg-tfstate"
+  --scope "/subscriptions/<SUB_ID>/resourceGroups/terraform-backend-rg"
 ```
 
 ---
@@ -193,7 +193,7 @@ Required for **read/write access** to the Terraform state file.
 az role assignment create \
   --assignee <SP_OBJECT_ID> \
   --role "Storage Blob Data Contributor" \
-  --scope "/subscriptions/<SUB_ID>/resourceGroups/rg-tfstate/providers/Microsoft.Storage/storageAccounts/<STORAGE_ACCOUNT_NAME>"
+  --scope "/subscriptions/<SUB_ID>/resourceGroups/terraform-backend-rg/providers/Microsoft.Storage/storageAccounts/<STORAGE_ACCOUNT_NAME>"
 ```
 
 ---
@@ -240,7 +240,7 @@ Define the following variables in the pipeline (Library or Pipeline UI):
 
 ```text
 azureServiceConnection = azurerm-terraform-backend
-resourceGroup           = rg-tfstate
+resourceGroup           = terraform-backend-rg
 storageAccount          = <storage-account-name>
 container               = terraform-state
 tfStateKey              = terraform.tfstate
