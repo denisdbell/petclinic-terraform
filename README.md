@@ -198,7 +198,7 @@ az role assignment create \
 
 ---
 
-### 3.3 (Optional) Contributor – Subscription Scope
+### 3.3 Contributor – Subscription Scope
 
 Only required if Terraform manages **multiple resource groups** or subscription-level resources.
 
