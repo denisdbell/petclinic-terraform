@@ -174,7 +174,7 @@ az ad sp list --display-name "<service-connection-name>" --query "[0].id" -o tsv
 
 ### 3.1 Contributor – Resource Group Scope
 
-Allows Terraform to create and manage infrastructure within the backend resource group.
+Allows Terraform to create and manage infrastructure state which is stored in storage account.
 
 ```bash
 az role assignment create \
