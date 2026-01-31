@@ -103,6 +103,12 @@ The following ARM template creates:
 
 ### Deploy the Template
 
+Download the backend,json file (Bash)
+
+```bash
+curl -L -o backend.json https://raw.githubusercontent.com/denisdbell/petclinic-terraform/main/backend.json
+```
+
 Deploy at **subscription scope**:
 
 ```bash
