@@ -25,7 +25,7 @@
     }
   },
   "variables": {
-    "rgName": "[concat(parameters('prefix'), '-', parameters('baseName'), '-rg')]",
+    "rgName": "rg-tfstate",
     "uniqueSuffix": "[uniqueString(subscription().subscriptionId, variables('rgName'))]",
     "storageAccountName": "[toLower(concat(parameters('prefix'), variables('uniqueSuffix')))]",
     "containerName": "[concat(parameters('prefix'), '-state')]"
